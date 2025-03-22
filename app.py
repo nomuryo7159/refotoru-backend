@@ -6,7 +6,9 @@ import uuid
 import tempfile
 import mysql.connector
 from mysql.connector import Error
-# from dotenv import load_dotenv
+from dotenv import load_dotenv
+from datetime import datetime
+import pytz  # 日本時間の変換用
 
 app = FastAPI()
 
@@ -37,20 +39,37 @@ DB_HOST = os.getenv('DB_HOST')
 DB_PORT = os.getenv('DB_PORT')
 DB_NAME = os.getenv('DB_NAME')
 
-# SSL証明書の取得
-SSL_CA_CERT = os.getenv("SSL_CA_CERT")
-if not SSL_CA_CERT:
-    raise ValueError(":x: SSL_CA_CERT が設定されていません！")
-
-# SSL証明書の一時ファイル作成
-def create_ssl_cert_tempfile():
-    pem_content = SSL_CA_CERT.replace("\\n", "\n").replace("\\", "")
-    temp_pem = tempfile.NamedTemporaryFile(delete=False, suffix=".pem", mode="w")
-    temp_pem.write(pem_content)
-    temp_pem.close()
-    return temp_pem.name
-
-SSL_CA_PATH = create_ssl_cert_tempfile()
+def store_image_metadata(filename: str, blob_url: str):
+    """アップロードした画像のメタデータをMySQLに保存する"""
+    try:
+        ssl_ca_cert_path = os.getenv('SSL_CA_CERT')  # 環境変数から取得（フルパス）
+        
+        connection = mysql.connector.connect(
+            host=DB_HOST,
+            user=DB_USER,
+            password=DB_PASSWORD,
+            database=DB_NAME,
+            port=DB_PORT,
+            ssl_ca=ssl_ca_cert_path  # SSL CA証明書を使ったセキュア接続
+        )
+        if connection.is_connected():
+            cursor = connection.cursor()
+            query = """
+                INSERT INTO upload_images (filename, blob_url, upload_date)
+                VALUES (%s, %s, %s)
+            """
+            # 日本時間 (JST: UTC+9) に変換
+            jst = pytz.timezone('Asia/Tokyo')
+            upload_date = datetime.now(jst).strftime('%Y-%m-%d %H:%M:%S')
+            cursor.execute(query, (filename, blob_url, upload_date))
+            connection.commit()
+            cursor.close()
+        connection.close()
+    except Error as e:
+        print(f"Database error: {e}")
+    finally:
+        if connection.is_connected():
+            connection.close()
 
 @app.post("/upload")
 async def upload_image(file: UploadFile = File(...)):
@@ -69,10 +88,19 @@ async def upload_image(file: UploadFile = File(...)):
         with open(file_path, "rb") as data:
             blob_client.upload_blob(data, overwrite=True)
 
+        # アップロードしたBlobのURLを取得
+        blob_url = blob_client.url
+
+        # データベースに情報を保存
+        store_image_metadata(filename, blob_url)
+
         # 一時ファイルを削除
         os.remove(file_path)
 
-        return {"message": "画像が正常にアップロードされました", "filename": filename}
+        return {
+            "message": "画像が正常にアップロードされました", 
+            "filename": filename,
+            "blob_url": blob_url}
 
     except Exception as e:
         return {"error": str(e)}
