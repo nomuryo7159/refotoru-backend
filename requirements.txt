@@ -13,4 +13,8 @@ typing_extensions==4.12.2
 uvicorn==0.34.0
 python-dotenv==1.0.1
 azure-storage-blob==12.25.0
+<<<<<<< HEAD
 mysql-connector-python==9.1.0
+=======
+mysql-connector-python==9.1.0
+>>>>>>> origin/main
