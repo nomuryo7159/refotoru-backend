@@ -13,12 +13,4 @@ typing_extensions==4.12.2
 uvicorn==0.34.0
 python-dotenv==1.0.1
 azure-storage-blob==12.25.0
-<<<<<<< HEAD
 mysql-connector-python==9.1.0
-=======
-mysql-connector-python==9.1.0
-<<<<<<< HEAD
->>>>>>> b736fd2 (update requirements.txt)
-=======
->>>>>>> origin/main
->>>>>>> 19e9f9f09dd44550da4d70145711f3f582b4a6d6
