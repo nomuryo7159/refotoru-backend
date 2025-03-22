@@ -16,7 +16,7 @@ load_dotenv()
 # CORSミドルウェアの設定
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://tech0-gen-8-step4-peak-front-d2ayf3aca3e3bcdu.canadacentral-01.azurewebsites.net"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
