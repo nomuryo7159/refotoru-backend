@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 app = FastAPI()
 
 # .env ファイルを読み込む
-load_dotenv()
+# load_dotenv()
 
 # CORSミドルウェアの設定
 app.add_middleware(
