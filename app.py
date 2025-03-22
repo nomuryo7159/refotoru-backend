@@ -8,7 +8,7 @@ import mysql.connector
 from mysql.connector import Error
 from dotenv import load_dotenv
 from datetime import datetime
-import pytz  # 日本時間の変換用
+from zoneinfo import ZoneInfo
 
 app = FastAPI()
 
@@ -71,8 +71,8 @@ def store_image_metadata(filename: str, blob_url: str):
                 INSERT INTO upload_images (filename, blob_url, upload_date)
                 VALUES (%s, %s, %s)
             """
-            # 日本時間 (JST: UTC+9) に変換
-            jst = pytz.timezone('Asia/Tokyo')
+            # 日本標準時（Asia/Tokyo）を ZoneInfo で指定
+            jst = ZoneInfo("Asia/Tokyo")
             upload_date = datetime.now(jst).strftime('%Y-%m-%d %H:%M:%S')
             cursor.execute(query, (filename, blob_url, upload_date))
             connection.commit()
