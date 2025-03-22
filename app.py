@@ -37,6 +37,21 @@ DB_HOST = os.getenv('DB_HOST')
 DB_PORT = os.getenv('DB_PORT')
 DB_NAME = os.getenv('DB_NAME')
 
+# SSL証明書の取得
+SSL_CA_CERT = os.getenv("SSL_CA_CERT")
+if not SSL_CA_CERT:
+    raise ValueError(":x: SSL_CA_CERT が設定されていません！")
+
+# SSL証明書の一時ファイル作成
+def create_ssl_cert_tempfile():
+    pem_content = SSL_CA_CERT.replace("\\n", "\n").replace("\\", "")
+    temp_pem = tempfile.NamedTemporaryFile(delete=False, suffix=".pem", mode="w")
+    temp_pem.write(pem_content)
+    temp_pem.close()
+    return temp_pem.name
+
+SSL_CA_PATH = create_ssl_cert_tempfile()
+
 @app.post("/upload")
 async def upload_image(file: UploadFile = File(...)):
     try:
