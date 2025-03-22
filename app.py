@@ -39,18 +39,31 @@ DB_HOST = os.getenv('DB_HOST')
 DB_PORT = os.getenv('DB_PORT')
 DB_NAME = os.getenv('DB_NAME')
 
+# SSL証明書の取得
+SSL_CA_CERT = os.getenv("SSL_CA_CERT")
+if not SSL_CA_CERT:
+    raise ValueError(":x: SSL_CA_CERT が設定されていません！")
+
+# # SSL証明書の一時ファイル作成
+def create_ssl_cert_tempfile():
+    pem_content = SSL_CA_CERT.replace("\\n", "\n").replace("\\", "")
+    temp_pem = tempfile.NamedTemporaryFile(delete=False, suffix=".pem", mode="w")
+    temp_pem.write(pem_content)
+    temp_pem.close()
+    return temp_pem.name
+
+SSL_CA_PATH = create_ssl_cert_tempfile()
+
 def store_image_metadata(filename: str, blob_url: str):
     """アップロードした画像のメタデータをMySQLに保存する"""
     try:
-        ssl_ca_cert_path = os.getenv('SSL_CA_CERT')  # 環境変数から取得（フルパス）
-        
         connection = mysql.connector.connect(
             host=DB_HOST,
             user=DB_USER,
             password=DB_PASSWORD,
             database=DB_NAME,
             port=DB_PORT,
-            ssl_ca=ssl_ca_cert_path  # SSL CA証明書を使ったセキュア接続
+            ssl_ca=SSL_CA_PATH  # SSL CA証明書を使ったセキュア接続
         )
         if connection.is_connected():
             cursor = connection.cursor()
